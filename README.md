@@ -4,7 +4,7 @@ cli simple python script to interact with iphone afc api based on python library
 
 
 
-#installation
+# installation
 
-pip3 install -U tidevice
+pip3 install -U tidevice\n
 cp afcclient /usr/local/bin/
