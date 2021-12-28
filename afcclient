@@ -213,6 +213,8 @@ elif len(sys.argv) > 1 :
 
             elif arg == 'exit':
                 break
+            else:
+                print("err:unknown command!")
 
 
     elif sys.argv[1] == 'list-devices' :
