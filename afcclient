@@ -1,0 +1,257 @@
+#!/bin/env python3
+
+import subprocess
+import sys
+from tidevice.__main__ import main
+import re
+from tidevice.exceptions import *
+
+
+
+array_1=['tidevice']
+
+
+def tidevice():
+    sys.argv[0] == re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    main()
+
+
+
+def _2args(arg1, arg2):
+
+    sys.argv=array_1
+    sys.argv=sys.argv+['fsync',arg1,arg2]
+
+def _3args(arg1, arg2, arg3):
+
+    sys.argv=array_1
+    sys.argv=sys.argv+['fsync',arg1,arg2,arg3]
+
+def pull(source):
+
+        if 'REG' in str(subprocess.check_output("tidevice fsync stat "+source, shell=True)):
+            _2args('pull',source)
+            tidevice()
+        else :
+            print('the source is Directory')
+            x=input('do you wana try to pull it? (y/n)\n')
+            if x == 'y':
+                files=str(subprocess.check_output("tidevice fsync ls "+source, shell=True))
+                files=files.replace('b"[','')
+                files=files.replace('\\n','')
+                files=files.replace(']"','')
+                files=files.replace("'",'')
+                file=files.split(",")
+                for i in file:
+                    try:
+                        if source[-1] == '/':
+                            _2args('pull',source+i.lstrip())
+                        else:
+                            _2args('pull',source+'/'+i.lstrip())
+
+                        tidevice()
+                    except MuxError as error:
+                        if 'is a directory' in str(error):
+                            print('pulling directories inside directory will be done soon')
+                        else:
+                            print(error)
+
+
+def push(source,destination):
+    _3args('push',source,destination)
+    tidevice()
+
+
+
+print("""\033[1;32m                    'c.
+                 ,xNMM.
+               .OMMMMo
+               OMMM0,
+     .;loddo:' loolloddol;.
+   cKMMMMMMMMMMNWMMMMMMMMMM0:\033[1;33m
+.KMMMMMMMMMMMMMMMMMMMMMMMWd.
+ XMMMMMMMMMMMMMMMMMMMMMMMX.
+;MMMMMMMMMMMMMMMMMMMMMMMM:\033[1;31m
+:MMMMMMMMMMMMMMMMMMMMMMMM:
+.MMMMMMMMMMMMMMMMMMMMMMMMX.
+ kMMMMMMMMMMMMMMMMMMMMMMMMWd.
+ .XMMMMMMMMMMMMMMMMMMMMMMMMMMk\033[1;35m
+  .XMMMMMMMMMMMMMMMMMMMMMMMMK.
+    kMMMMMMMMMMMMMMMMMMMMMMd\033[1;36m
+     ;KMMMMMMMWXXWMMMMMMMk.
+       .cooc,.    .,coo:.
+""")
+
+print("\n\033[1;32mAFC Client by firas-tom\033[1;31m (Instagram:fyst._.14)\n\033[1;37m")
+
+if len(sys.argv) == 1:
+        print("Usage:\033[1;31m afcclient    \033[1;36mhelp                        #prints this help massage. \n                    shell                       #start interactive shell.\n                    list-devices                #lists conected idevices.\n                    list <source>               #list content of directory.\n                    pull <source>               #download file from the device.\n                    push <local-source> <dist>  #upload file to idevice.\033[1;37m")
+
+
+
+elif len(sys.argv) > 1 :
+    if sys.argv[1] == 'help' :
+        print("Usage:\033[1;31m afcclient    \033[1;36mhelp                        #prints this help massage. \n                    shell                       #start interactive shell.\n                    list-devices                #lists conected idevices.\n                    list <source>               #list content of directory.\n                    pull <source>               #download file from the device.\n                    push <local-source> <dist>  #upload file to idevice.\033[1;37m")
+    elif sys.argv[1] == 'shell' :
+        source='/'
+        while 1 > 0 :
+
+            arg=input("\n~"+source+':$ ')
+
+            if arg == 'help':
+                print ("commands\n--------\n-  help\n-  ls\n-  pwd\n-  cd <path>\n-  rm\n-  download <file>\n-  upload <source-local> <filename>")
+
+
+            elif 'download' in arg:
+                a=arg.replace("download",'').lstrip()
+                if len(a.replace(' ',''))==0:
+                    pull(source)
+                elif a[0]=='/':
+                    pull(a)
+                else:
+                    if source[-1] == '/':
+                        source=source+a
+                        pull(source)
+                    else:
+                        source=source+'/'+a
+                        pull(source)
+
+
+            elif 'rm' in arg:
+                a=arg.replace("rm",'').lstrip()
+                if len(a)==0:
+                    target=input("enter target path: ")
+                    _2args('rm',target)
+                    tidevice()
+                elif a[0]=='/':
+                    _2args('rm',a)
+                    tidevice()
+                else:
+                    _2args('rm',source+a)
+                    tidevice()
+
+            elif 'ls' in arg :
+                a=arg.replace("ls",'').lstrip()
+                if len(a)==0:
+                    _2args('ls',source)
+                    tidevice()
+                else :
+                    if a[0] == '/':
+                        _2args('ls',a)
+                        tidevice()
+                    else:
+                        _2args('ls',source+a)
+                        tidevice()
+
+            elif arg == 'pwd' :
+                print('~'+source)
+
+            elif 'cd' in arg :
+                a=arg.replace("cd",'').lstrip()
+                c=a.split('/')
+                if  ".." in c:
+                    while '..' in c:
+                        i=c.index("..")
+                        if i >= 1:
+                            del c[i]
+                            del c[i-1]
+                            x='/'.join(c)
+                            if a[0]=='/':
+                                source=x
+                            else:
+                                if '..' in c:
+                                    pass
+                                else:
+                                    if x[0]=='/':
+                                        source=source+x
+                                    else:
+                                        source=source+'/'+x
+                        else:
+                                del c[0]
+
+                                x='/'.join(c)
+                                source=source.split('/')
+                                del source[-1]
+                                source='/'.join(source)
+                                if len(source)==0:
+                                    if '..' in c:
+                                        pass
+                                    else:
+                                        source='/'+x
+
+                                elif source[0]!='/':
+                                    if '..' in c:
+                                        pass
+                                    else:
+                                        source='/'+x
+
+
+
+
+
+
+                elif len(a)==0 :
+                    source='/'
+
+
+                else :
+                    if a[0] == '/' :
+                        source=a
+
+
+                    else :
+                        if source[-1] == '/':
+                            if "'"+a+"'" in str(subprocess.check_output("tidevice fsync ls "+source, shell=True)):
+                                source=source+a
+                            else:
+                                print("err:no souch file or directory!")
+                        else :
+                            if a in str(subprocess.check_output("tidevice fsync ls "+source, shell=True)):
+                                source=source+'/'+a
+                            else:
+                                print("err:no souch file or directory!")
+
+            elif arg == 'exit':
+                break
+
+
+    elif sys.argv[1] == 'list-devices' :
+        sys.argv[1]='list'
+        tidevice()
+
+    elif sys.argv[1] == 'list' :
+        if len(sys.argv) < 3 :
+            source=input("please input the source : ")
+            a=os.system('tidevice fsync ls '+source)
+        else :
+            source=sys.argv[2]
+            _2args('ls', source)
+            tidevice()
+
+
+
+    elif  sys.argv[1] == 'pull' :
+        if len(sys.argv) < 3 :
+            source=input("please input the source : ")
+            pull(source)
+        else:
+            source=sys.argv[2]
+            pull(source)
+
+
+    elif sys.argv[1] == 'push' :
+        if len(sys.argv) > 3 :
+            source=sys.argv[2]
+            destination=sys.argv[3]
+            push(source,destination)
+        elif len(sys.argv) == 3 :
+            source=sys.argv[2]
+            destination=input("please input the destination : ")
+            push(source,destination)
+
+        else:
+            source=input("please input the source : ")
+            destination=input("please input the destination : ")
+            push(source,destination)
+
+
